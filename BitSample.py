@@ -10,7 +10,7 @@ class Sampler:
     # d - int bit size
     # r - range for close points
     # c - approximation factor
-    def __init__(self, n, d, r, c, data_file=None):
+    def __init__(self, n, d, r, c, is_write):
         self.n = n
         self.d = d
         self.r = r
@@ -19,10 +19,7 @@ class Sampler:
         self.c = c
         assert(c*r < d)
 
-        if data_file:
-            self.S = Data.get_bit_arr_from_data(data_file, d)
-        else:
-            self.S = Data.get_rand_data(n, d)
+        self.S = Data.get_rand_data(n, d, is_write)
 
         self.p1 = 1 - r/d        # lower bound prob. of choosing same bit from two close points
         self.p2 = 1 - c*r/d      # upper bound prob. of choosing same bit from two far points

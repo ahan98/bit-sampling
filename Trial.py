@@ -1,17 +1,18 @@
 # TODO make experiment params cmd line args
-# TODO print each data file for each trial for each d in dedicated directory
 
 from BitSample import Sampler, Data
 from Annoy import get_k_nns
 from random import getrandbits
+from pathlib import Path
+from shutil import rmtree
 
-def do_one_trial(n, d, r, c, query_size):
+def do_one_trial(n, d, r, c, query_size, is_write):
     try:
-        s = Sampler(n, d, r, c)
+        s = Sampler(n, d, r, c, is_write)
     except AssertionError:
         return None
 
-    bits = Data.get_rand_data(n, d)
+    bits = Data.get_rand_data(n, d, is_write)
     queries = [getrandbits(d) for _ in range(query_size)]
 
     n_succ = 0  # number of queries for which c-approx found at least 1 neighbor
@@ -42,8 +43,19 @@ def do_one_trial(n, d, r, c, query_size):
     return (avg_t1, avg_t2, avg_accuracy, n_succ)
 
 
-# num_trials is the # of trials to run for EACH unique configuration of d,r,c
-def run_experiment(data_size, num_trials, query_size, is_print=True):
+# num_trials is the # of trials to run for VALID configurations of d,r,c
+def run_experiment(data_size, num_trials, query_size, is_print=True, is_write=False):
+
+    # clear old data files first
+    if is_write:
+        dirpath = Path("data")
+        if dirpath.exists() and dirpath.is_dir():
+            print("\nDeleting old data files in ./data/")
+            print("New data files will OVERWRITE all files in ./data/")
+            if input("Continue? (Y/N):") == "N":
+                return
+            rmtree(dirpath)
+
     trial_avgs = []
     total_trials_per_d = [0] * 4
 
@@ -55,7 +67,7 @@ def run_experiment(data_size, num_trials, query_size, is_print=True):
             r = 1 << r_exp
             for c in range(1, 1 << (d_exp - r_exp)):  # c = [1,2,3,...,d/r - 1]
                 for _ in range(num_trials):
-                    trial = do_one_trial(data_size, d, r, c, query_size)
+                    trial = do_one_trial(data_size, d, r, c, query_size, is_write)
                     if trial:
                         cur_results.append(trial)
                         total_trials_per_d[d_exp - 3] += 1
@@ -94,5 +106,5 @@ if __name__ == "__main__":
     num_trials = 1
     query_size = 10
 
-    exp_results = run_experiment(data_size, num_trials, query_size)
+    exp_results = run_experiment(data_size, num_trials, query_size, is_write=True)
 
