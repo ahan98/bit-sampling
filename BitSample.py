@@ -1,15 +1,16 @@
-from random import sample, getrandbits
+from random import sample
 from math import log, floor
 from collections import defaultdict
-from csv import writer
+from time import time
+import Data
 
-class BitSample:
+class Sampler:
 
     # n - size of (randomly generated) data set
     # d - int bit size
     # r - range for close points
     # c - approximation factor
-    def __init__(self, n, d, r, c):
+    def __init__(self, n, d, r, c, data_file=None):
         self.n = n
         self.d = d
         self.r = r
@@ -18,66 +19,77 @@ class BitSample:
         self.c = c
         assert(c*r < d)
 
-        self.S = self.get_rand_data()
+        if data_file:
+            self.S = Data.get_bit_arr_from_data(data_file, d)
+        else:
+            self.S = Data.get_rand_data(n, d)
 
         self.p1 = 1 - r/d        # lower bound prob. of choosing same bit from two close points
         self.p2 = 1 - c*r/d      # upper bound prob. of choosing same bit from two far points
 
-        # NOTE floor or ceil?
-        self.k = floor(log(n, 1/self.p2))    # number of bits sampled from each x in S
-        self.L = floor(5/self.p1)            # number of hash functions g_i (to compute buckets)
+        self.k = floor(log(n, 1/self.p2))   # number of bits sampled from each x in S
+        assert(self.k <= d)
 
-        # NOTE not sure if these need to be attributes
-        self.bitmasks = self.getMasks()     # corresponds to the indices of the randomly sampled bits
+        # number of hash functions g_i (to compute buckets)
+        self.L = floor(5/self.p1)   # smaller r = larger p1 = smaller L
+
+        self.bitmasks = self.get_masks()    # corresponds to the indices of the randomly sampled bits
         self.inv_map = self.preprocess()    # stores all x in S that hash to g_i(x)
 
 
-    # randomly generate n d-bit ints
-    def get_rand_data(self):
-        data = []
-        for _ in range(self.n):
-            data.append([getrandbits(1) for _ in range(self.d)])
-        return data
-
-
-    # hashes each x in S to buckets g_1(x),...,g_L(x)
+    # hash each x in S to buckets g_1(x),...,g_L(x)
     def preprocess(self):
         inv_map = defaultdict(list)
-        for i in range(self.L):
-            for x in self.S:
-                bucket = self.get_bucket(self.bitmasks[i], x)
-                inv_map[bucket].append(x)
+        for x in self.S:
+            used_buckets = set()
+            for i in range(self.L):
+                g_ix = self._get_bucket(self.bitmasks[i], x)
+                if g_ix in used_buckets:
+                    continue
+                used_buckets.add(g_ix)
+                inv_map[g_ix].append(x)
         return inv_map
 
 
-    # TODO make concatenation more efficient
-    def get_bucket(self, bitmask, x):
-        bucket = ""
-        for i in range(len(bitmask)):
-            bucket += str(bitmask[i] & x[i])
-        return bucket
+    def _get_bucket(self, bitmask, x):
+        bucket = []
+        for i, bit in enumerate(bitmask):
+            if bit:
+                bucket.append(str(x[i]))
+        return ''.join(bucket)
 
 
     # q - the element to be queried
-    # returns an approx. close x in S, if such an x exists
+    # returns approx. (defined by c*r) nearest neighbors to q, sorted by distance
     def query(self, q):
+        nns = set()
+        q_bits = Data.get_dbit_arr(q, self.d, False)
+        start = time()
         for i in range(self.L):
-            bucket = self.bitmasks[i] & q
+            bucket = self._get_bucket(self.bitmasks[i], q_bits)
             for x in self.inv_map[bucket]:
-                if self.hamming(x,q) <= (self.c * self.r):
-                    return x
+                dist = Sampler.hamming(x, q_bits)
+                if dist > (self.c * self.r):
+                    continue
+                x = Data.get_dint(x)
+                if (x, dist) not in nns:
+                    nns.add((x, dist))
+        nns = sorted(nns, key=lambda pair:pair[1])
+        total_t = time() - start
+        return nns, total_t
 
 
     # returns hamming distance between two length-d bit arrays
-    def hamming(self, a, b):
+    @staticmethod
+    def hamming(a, b):
         n_diff = 0
-        for i in range(self.d):
+        for i in range(len(a)):
             n_diff += a[i] ^ b[i]
         return n_diff
 
 
     # returns a list of L randomly generated bitmasks
-    def getMasks(self):
+    def get_masks(self):
         bitmasks = []
         for _ in range(self.L):
             bitmasks.append(self.kOnes())
@@ -90,27 +102,4 @@ class BitSample:
         for idx in sample(range(self.d), self.k):
             mask[idx] = 1
         return mask
-
-
-    def dataToCSV(self):
-        print("saving data set to data.csv...")
-        with open('data.csv', 'w') as f:
-            my_writer = writer(f)
-            for val in self.S:
-                my_writer.writerow([val])
-
-
-    def print(self):
-        print("n =", self.n)
-        print("r =", self.r)
-        print("c =", self.c)
-        print("d =", self.d)
-        self.dataToCSV()
-        print("p1 =", self.p1)
-        print("p2 =", self.p2)
-        print("L =", self.L)
-        print("k =", self.k)
-        print("bitmasks =", self.bitmasks)
-        print("inv_map =", self.inv_map)
-
 
