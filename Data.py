@@ -32,6 +32,7 @@ def _write_bits_to_file(bits, d):
     rel_dir = "./data/d_" + str(d)
     Path(rel_dir).mkdir(parents=True, exist_ok=True)
 
+
     
 
 

@@ -11,7 +11,7 @@ def do_one_trial(n, d, r, c, query_size):
     except AssertionError:
         return None
 
-    bits = Data.get_bit_arr_from_data("data.txt", d)
+    bits = Data.get_rand_data(n, d)
     queries = [getrandbits(d) for _ in range(query_size)]
 
     n_succ = 0  # number of queries for which c-approx found at least 1 neighbor
