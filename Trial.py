@@ -1,3 +1,6 @@
+# TODO make time in milliseconds
+# TODO comments
+
 from BitSample import Sampler, Data
 from Annoy import get_k_nns
 from random import getrandbits
@@ -61,6 +64,17 @@ def run_experiment(n_trials):
     return trial_avgs
 
 
+def pretty_print(exp_results, n_trials):
+    for i, vals in enumerate(exp_results):
+        print("\nResults for d =", str(1 << (i + 3)))
+        print("Average execution time for c-approximate:", vals[0])
+        print("Average execution time for Spotify's Annoy API:", vals[1])
+        print("Average accuracy for c-approximate:", vals[2])
+        print("Average ratio of successful trials using c-approximate:", vals[3])
+
+
 if __name__ == "__main__":
-    print(run_experiment(1))
+    n_trials = 1
+    exp_results = run_experiment(n_trials)
+    pretty_print(exp_results, n_trials)
 
