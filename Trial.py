@@ -1,5 +1,5 @@
-# TODO make time in milliseconds
-# TODO comments
+# TODO make experiment params cmd line args
+# TODO print each data file for each trial for each d in dedicated directory
 
 from BitSample import Sampler, Data
 from Annoy import get_k_nns
@@ -14,9 +14,9 @@ def do_one_trial(n, d, r, c, query_size):
     bits = Data.get_bit_arr_from_data("data.txt", d)
     queries = [getrandbits(d) for _ in range(query_size)]
 
-    n_succ = 0
-    total_t1 = total_t2 = 0
-    avg_accuracy = 0
+    n_succ = 0  # number of queries for which c-approx found at least 1 neighbor
+    total_t1 = total_t2 = 0  # total time for c-approx and annoy, respectively
+    avg_accuracy = 0  # % of approximate neighbors that are also exact neighbors
 
     for q in queries:
         nns, t1 = s.query(q)
@@ -29,52 +29,66 @@ def do_one_trial(n, d, r, c, query_size):
         total_t1 += t1
         total_t2 += t2
 
-    if not n_succ:
+    if not n_succ:  # c-approx failed for all queries
         return None
 
+    # average each metric based on number of successful queries
     avg_t1 = total_t1 / n_succ
     avg_t2 = total_t2 / n_succ
     avg_accuracy /= n_succ
-    ratio_succ = n_succ / len(queries)
 
-    return (avg_t1, avg_t2, avg_accuracy, ratio_succ)
+    return (avg_t1, avg_t2, avg_accuracy, n_succ)
 
 
-def run_experiment(n_trials):
-
+# num_trials is the # of trials to run for EACH unique configuration of d,r,c
+def run_experiment(data_size, num_trials, query_size, is_print=True):
     trial_avgs = []
+    total_trials_per_d = [0] * 4
 
-    for d in [8, 16, 32, 64]:
+    for d_exp in range(3, 7):  # d = [8,16,32,64]
+        d = 1 << d_exp
         cur_results = []
-        r = 2
-        while r < d:
-            c = 1
-            while c*r < d:
-                for i in range(n_trials):
-                    trial = do_one_trial(1000, d, r, c, 10)
+        n_failed = 0
+        for r_exp in range(d_exp):  # r = [1,2,...,2^(d_exp-1)]
+            r = 1 << r_exp
+            for c in range(1, 1 << (d_exp - r_exp)):  # c = [1,2,3,...,d/r - 1]
+                for _ in range(num_trials):
+                    trial = do_one_trial(data_size, d, r, c, query_size)
                     if trial:
                         cur_results.append(trial)
-
-                c += 1
-            r <<= 1 # square r
+                        total_trials_per_d[d_exp - 3] += 1
 
         sum_results = [sum(metric) for metric in zip(*cur_results)]
         trial_avgs.append([val / len(cur_results) for val in sum_results])
 
-    return trial_avgs
+    if is_print:
+        pretty_print(trial_avgs, total_trials_per_d, data_size, num_trials, query_size)
+
+    return trial_avgs, total_trials_per_d
 
 
-def pretty_print(exp_results, n_trials):
-    for i, vals in enumerate(exp_results):
-        print("\nResults for d =", str(1 << (i + 3)))
-        print("Average execution time for c-approximate:", vals[0])
-        print("Average execution time for Spotify's Annoy API:", vals[1])
-        print("Average accuracy for c-approximate:", vals[2])
-        print("Average ratio of successful trials using c-approximate:", vals[3])
+def pretty_print(trial_avgs, total_trials_per_d, data_size, num_trials, query_size):
+
+    print('\n', num_trials, "trials simulated for each valid configuration of d, r, and c")
+    print("Each trial attempted to query", query_size, "elements from a data set of size", data_size)
+
+    for i, vals in enumerate(trial_avgs):
+
+        print('\n' + ("-" * 100))
+
+        print("\nResults for d =", str(1 << (i + 3)), '(', total_trials_per_d[i], " total trials )\n")
+
+        print("Average execution time PER QUERY:")
+        print("c-approximate:", round(vals[0] * 1000, 2), 'ms')
+        print("Annoy:", round(vals[1] * 1000, 2), "ms\n")
+
+        print("Average accuracy of c-approximate:", round(vals[2] * 100, 2), '%')
+        print("Percent of c-approximate queries which returned at least one neighbor:", round(100 * vals[3] / query_size, 2) , '%')
 
 
 if __name__ == "__main__":
-    n_trials = 1
-    exp_results = run_experiment(n_trials)
-    pretty_print(exp_results, n_trials)
+    data_size = 1000
+    num_trials = 1
+    query_size = 10
+    exp_results = run_experiment(data_size, num_trials, query_size)
 

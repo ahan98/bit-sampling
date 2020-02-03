@@ -28,8 +28,8 @@ def get_rand_data(n, d):
 # write bit arrays as ints to data.txt
 def _write_bits_to_file(bits):
     with open('data.txt', 'w') as output_file:
-        print("Generating random data\n")
-        print("Writing to data.txt...")
+        #print("\nGenerating random data")
+        #print("Writing to data.txt...")
         for bit_arr in bits:
             n = 0
             for b in bit_arr:
