@@ -1,6 +1,6 @@
-from annoy import AnnoyIndex
-from BitSample import Sampler
 from time import time
+from annoy import AnnoyIndex
+from Sampler import Sampler
 import Data
 
 def get_k_nns(q, k, bits, d, metric):

@@ -1,10 +1,11 @@
 # TODO make experiment params cmd line args
 
-from BitSample import Sampler, Data
-from Annoy import get_k_nns
 from random import getrandbits
 from pathlib import Path
 from shutil import rmtree
+from Sampler import Sampler
+from Annoy import get_k_nns
+import Data
 
 def do_one_trial(n, d, r, c, query_size, is_write):
     try:
@@ -38,8 +39,6 @@ def do_one_trial(n, d, r, c, query_size, is_write):
     avg_t2 = total_t2 / n_succ
     avg_accuracy /= n_succ
 
-    # write bits array to ./d_[d]/nums_[last_filenum + 1].txt
-
     return (avg_t1, avg_t2, avg_accuracy, n_succ)
 
 
@@ -52,7 +51,7 @@ def run_experiment(data_size, num_trials, query_size, is_print=True, is_write=Fa
         if dirpath.exists() and dirpath.is_dir():
             print("\nDeleting old data files in ./data/")
             print("New data files will OVERWRITE all files in ./data/")
-            if input("Continue? (Y/N):") == "N":
+            if input("Continue? (Y/N): ") == "N":
                 return
             rmtree(dirpath)
 
@@ -83,7 +82,7 @@ def run_experiment(data_size, num_trials, query_size, is_print=True, is_write=Fa
 
 def pretty_print(trial_avgs, total_trials_per_d, data_size, num_trials, query_size):
 
-    print('\n', num_trials, "trials simulated for each valid configuration of d, r, and c")
+    print(num_trials, "trials simulated for each valid configuration of d, r, and c")
     print("Each trial attempted to query", query_size, "elements from a data set of size", data_size)
 
     for i, vals in enumerate(trial_avgs):
