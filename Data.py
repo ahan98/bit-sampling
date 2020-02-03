@@ -1,4 +1,6 @@
 from random import getrandbits
+from pathlib import Path
+import os
 
 # convert file of d-bit ints to list of bits
 def get_bit_arr_from_data(filename, d):
@@ -21,20 +23,16 @@ def get_rand_data(n, d):
     bits = []
     for _ in range(n):
         bits.append([getrandbits(1) for _ in range(d)])
-    _write_bits_to_file(bits)
+    _write_bits_to_file(bits, d)
     return bits
 
 
-# write bit arrays as ints to data.txt
-def _write_bits_to_file(bits):
-    with open('data.txt', 'w') as output_file:
-        #print("\nGenerating random data")
-        #print("Writing to data.txt...")
-        for bit_arr in bits:
-            n = 0
-            for b in bit_arr:
-                n = (n << 1) | b
-            output_file.write(str(n) + '\n')
+# write bit arrays to file
+def _write_bits_to_file(bits, d):
+    rel_dir = "./data/d_" + str(d)
+    Path(rel_dir).mkdir(parents=True, exist_ok=True)
+
+    
 
 
 def get_dint(bitlist):

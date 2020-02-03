@@ -37,6 +37,8 @@ def do_one_trial(n, d, r, c, query_size):
     avg_t2 = total_t2 / n_succ
     avg_accuracy /= n_succ
 
+    # write bits array to ./d_[d]/nums_[last_filenum + 1].txt
+
     return (avg_t1, avg_t2, avg_accuracy, n_succ)
 
 
@@ -87,8 +89,10 @@ def pretty_print(trial_avgs, total_trials_per_d, data_size, num_trials, query_si
 
 
 if __name__ == "__main__":
+    # make these cmd line args
     data_size = 1000
     num_trials = 1
     query_size = 10
+
     exp_results = run_experiment(data_size, num_trials, query_size)
 
