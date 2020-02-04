@@ -13,7 +13,6 @@ def do_one_trial(n, d, r, c, query_size, is_write):
     except AssertionError:
         return None
 
-    bits = Data.get_rand_data(n, d, is_write)
     queries = [getrandbits(d) for _ in range(query_size)]
 
     n_succ = 0  # number of queries for which c-approx found at least 1 neighbor
@@ -24,7 +23,7 @@ def do_one_trial(n, d, r, c, query_size, is_write):
         nns, t1 = s.query(q)
         if not nns:
             continue
-        annoy, t2 = get_k_nns(q, len(nns), bits, d, "hamming")
+        annoy, t2 = get_k_nns(q, len(nns), s.S, d, "hamming")
 
         avg_accuracy += (len(nns) - len(set(nns) - set(annoy))) / len(nns)
         n_succ += 1
