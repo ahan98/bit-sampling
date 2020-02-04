@@ -15,35 +15,35 @@ Each trial attempted to query 10 elements from a data set of size 1000
 ----------------------------------------------------------------------------------------------------
 Results for d = 8 ( 4  total trials )
 Average execution time PER QUERY:
-c-approximate: 5.29 ms
-Annoy: 13.43 ms
-Average accuracy of c-approximate: 30.66 %
+c-approximate: 4.78 ms
+Annoy: 13.31 ms
+Average accuracy of c-approximate: 31.44 %
 Percent of c-approximate queries which returned at least one neighbor: 100.0 %
 ----------------------------------------------------------------------------------------------------
 Results for d = 16 ( 18  total trials )
 Average execution time PER QUERY:
-c-approximate: 5.95 ms
-Annoy: 11.24 ms
-Average accuracy of c-approximate: 0.69 %
+c-approximate: 6.48 ms
+Annoy: 11.63 ms
+Average accuracy of c-approximate: 54.04 %
 Percent of c-approximate queries which returned at least one neighbor: 96.11 %
 ----------------------------------------------------------------------------------------------------
-Results for d = 32 ( 40  total trials )
+Results for d = 32 ( 38  total trials )
 Average execution time PER QUERY:
-c-approximate: 12.26 ms
-Annoy: 13.36 ms
-Average accuracy of c-approximate: 0.0 %
-Percent of c-approximate queries which returned at least one neighbor: 90.5 %
+c-approximate: 12.78 ms
+Annoy: 13.75 ms
+Average accuracy of c-approximate: 49.0 %
+Percent of c-approximate queries which returned at least one neighbor: 93.42 %
 ----------------------------------------------------------------------------------------------------
-Results for d = 64 ( 79  total trials )
+Results for d = 64 ( 77  total trials )
 Average execution time PER QUERY:
-c-approximate: 26.09 ms
+c-approximate: 26.57 ms
 Annoy: 19.85 ms
-Average accuracy of c-approximate: 0.0 %
-Percent of c-approximate queries which returned at least one neighbor: 92.28 %
+Average accuracy of c-approximate: 50.98 %
+Percent of c-approximate queries which returned at least one neighbor: 93.51 %
 ```
 
 ## Measuring Performance
-Each simulation iterates through various configurations for `d` (the bitlength of integers), `r` (the distance of "close" points), and `c` (the approximation factor such that query `q` is approximately close to data point `x` if `hamming(q,x) <= c*r`. 
+Each simulation iterates through various configurations for `d` (the bitlength of integers), `r` (the distance of "close" points), and `c` (the approximation factor such that query `q` is approximately close to data point `x` if `hamming(q,x) <= c*r`.
 
 **Note:** An invalid coniguration of `(d,r,c)` is one which results in a mathematical error when initializing the `Sampler` object, since other attributes are functions of these three parameters; see the `assert` statements in  `Sampler.py` for more detail.
 
@@ -67,4 +67,4 @@ I've attempted to standardize the trials as much as possible to better understan
 
 Note that probabilistic failure can be further reduced by configuring the `numerator` variable in `Sampler.__init__()`, though this will of course impact runtime performance. Briefly explaining, increasing the numerator  increases the total number of buckets into which elements of the data sets are hashed. This means that data points are hashed less sparsely.
 
-See `Section 5.2 - Analysis` of the above PSU paper, particularly the analysis of a missed query occurring with probability `1/e`, which can be reduced arbitrarily low.  
+See `Section 5.2 - Analysis` of the above PSU paper, particularly the analysis of a missed query occurring with probability `1/e`, which can be reduced arbitrarily low.
